@@ -47,7 +47,7 @@ const signup = async (req, res) => {
     }
 };
 
-const signin = async (req, res) => {
+const login = async (req, res) => {
 
     const { email, password } = req.body;
 
@@ -63,7 +63,7 @@ const signin = async (req, res) => {
             id: user._id,
             fullName: user.fullName,
             email: user.email,
-            profilePic: user.profilePic,
+            profilePic: user.profilePic,// todo fix this
         })
 
     } catch (error) {
