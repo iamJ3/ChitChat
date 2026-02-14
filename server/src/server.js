@@ -3,6 +3,7 @@ import authRoutes from './routes/auth.route.js';
 import dotenv from "dotenv"
 import { connectDb } from "./lib/db.js";
 import cookieParser from "cookie-parser";
+// import messageRoutes from "./routes/message.route.js";
 
 const app = express();
 
@@ -16,12 +17,10 @@ const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
     res.send('Hello, World!');
-})
+});
 
 app.listen(PORT, () => {
     console.log(`server is listening on http://localhost:${PORT}`);
-    // console.log("mongo ur =",process.env.MONGODB_URI);
-    
     connectDb().catch(err => {
         console.error('Error connecting to MongoDB:', err);
         process.exit(1);
