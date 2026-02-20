@@ -6,18 +6,30 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 // import messageRoutes from "./routes/message.route.js";
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://chit-chat-space.vercel.app"
+];
 const app = express();
-
 dotenv.config()
+
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  credentials: true
 }));
+
 app.use(cookieParser());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 
 app.get('/', (req, res) => {
