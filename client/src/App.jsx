@@ -2,6 +2,7 @@ import AppRoutes from './routes/AppRoutes.jsx'
 import Navbar from './components/Navbar.jsx'
 import { useAuthStore } from './store/useAuthStore.js';
 import { useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Loader } from 'lucide-react';
 
 const App = () => {
@@ -24,6 +25,7 @@ const App = () => {
     <div>
       <Navbar />
       <AppRoutes />
+      <Toaster />
     </div>
   )
 }
