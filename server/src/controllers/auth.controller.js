@@ -1,7 +1,7 @@
 import { generateToken } from "../lib/utils.js"
 import User from "../models/user.model.js"
 import bcrypt, { hash } from "bcryptjs"
-
+import cloudinary from "../lib/Cloudinary.js"
 
 const signup = async (req, res) => {
     const { fullName, email, password } = req.body;
@@ -82,25 +82,73 @@ const logout = (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
 const updateProfile = async (req, res) => {
     try {
         const { profilePic } = req.body;
         const userid = req.user._id;
 
-        if (!profilePic) return res.status(400).json({ message: "profile pic is required" });
-        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        // Validate base64 image exists
+        if (!profilePic) {
+            return res.status(400).json({ message: "Profile picture is required" });
+        }
+
+        // Validate base64 format
+        if (!profilePic.startsWith('data:image/')) {
+            return res.status(400).json({ message: "Invalid image format" });
+        }
+
+        // Extract image type from base64 string
+        const imageTypeMatch = profilePic.match(/^data:image\/(\w+);base64,/);
+        const imageType = imageTypeMatch ? imageTypeMatch[1] : 'jpeg';
+        
+        // Validate image type
+        const allowedTypes = ['jpeg', 'jpg', 'png'];
+        if (!allowedTypes.includes(imageType.toLowerCase())) {
+            return res.status(400).json({ 
+                message: "Invalid image type. Only JPEG, JPG, and PNG are allowed" 
+            });
+        }
+
+        // Upload to Cloudinary with optimized settings
+        const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+            folder: "profile_pics",
+            allowed_formats: ["jpg", "jpeg", "png"],
+            transformation: [
+                { width: 500, height: 500, crop: "fill" },
+                { quality: "auto:good" }
+            ],
+            resource_type: "image"
+        });
+
+        // Update user profile
         const updatedUser = await User.findByIdAndUpdate(
             userid,
             { profilePic: uploadResponse.secure_url },
             { new: true }
-        );
+        ).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
         res.status(200).json(updatedUser);
     } catch (error) {
-        console.log("error in update profile:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Error in update profile:", error.message);
+        
+        // Handle Cloudinary specific errors
+        if (error.message.includes('Invalid image file')) {
+            return res.status(400).json({ message: "Invalid image file provided" });
+        }
+        
+        if (error.message.includes('File size too large')) {
+            return res.status(413).json({ message: "Image file is too large" });
+        }
+        
+        res.status(500).json({ message: "Internal server error: " + error.message });
     }
 }
+
 const checkAuth = (req, res) => {
     try {
         res.status(200).json(req.user);

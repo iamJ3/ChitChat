@@ -6,7 +6,7 @@ export const useAuthStore = create((set) => ({
     authUser: null,
     isSigningUp: false,
     isLoggingIng: false,
-    IsUpdatingProfile: false,
+    isUpdatingProfile: false,
     IsCheckingAuth: true,
 
     checkAuth: async () => {
@@ -74,7 +74,8 @@ export const useAuthStore = create((set) => ({
             toast.success("Profile updated successfully");
         } catch (error) {
             console.log("error in update profile:", error);
-            toast.error(error.response.data.message);
+            const errorMessage = error.response?.data?.message || "Failed to update profile";
+            toast.error(errorMessage);
         } finally {
             set({ isUpdatingProfile: false });
         }

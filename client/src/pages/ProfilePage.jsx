@@ -1,24 +1,128 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Camera, Mail, User } from "lucide-react";
+import { Camera, Mail, User, X, AlertCircle } from "lucide-react";
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+
+  const validateImageFile = (file) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    const minSize = 10 * 1024; // 10KB minimum
+
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        isValid: false,
+        error: 'Invalid file type. Only JPG, JPEG, and PNG files are allowed.'
+      };
+    }
+
+    // Check file size - too large
+    if (file.size > maxSize) {
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+      return {
+        isValid: false,
+        error: `File size too large (${sizeInMB}MB). Maximum size allowed is 2MB.`
+      };
+    }
+
+    // Check file size - too small (likely corrupted)
+    if (file.size < minSize) {
+      return {
+        isValid: false,
+        error: 'File size too small. The image may be corrupted or empty.'
+      };
+    }
+
+    return { isValid: true, error: null };
+  };
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Calculate new dimensions (max width 600px)
+          let { width, height } = img;
+          if (width > 600) {
+            const ratio = 600 / width;
+            width = 600;
+            height = height * ratio;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress image
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to JPEG with 0.7 quality
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+              } else {
+                reject(new Error('Failed to compress image'));
+              }
+            },
+            'image/jpeg',
+            0.7
+          );
+        };
+        
+        img.onerror = reject;
+      };
+      
+      reader.onerror = reject;
+    });
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    setUploadError(null);
 
-    reader.readAsDataURL(file);
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      setUploadError(validation.error);
+      e.target.value = '';
+      return;
+    }
 
-    reader.onload = async () => {
-      const base64Image = reader.result;
-      setSelectedImg(base64Image);
-      await updateProfile({ profilePic: base64Image });
-    };
+    try {
+      // Compress the image
+      const compressedBase64 = await compressImage(file);
+      setSelectedImg(compressedBase64);
+      setUploadError(null);
+      
+      await updateProfile({ profilePic: compressedBase64 });
+    } catch (error) {
+      console.error('Image compression error:', error);
+      const errorMessage = 'Failed to process image. Please try again.';
+      setUploadError(errorMessage);
+      setSelectedImg(null);
+      e.target.value = '';
+    }
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImg(null);
+    setUploadError(null);
   };
 
   return (
@@ -31,7 +135,6 @@ const ProfilePage = () => {
           </div>
 
           {/* avatar upload section */}
-
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
               <img
@@ -39,6 +142,15 @@ const ProfilePage = () => {
                 alt="Profile"
                 className="size-32 rounded-full object-cover border-4 "
               />
+              {selectedImg && (
+                <button
+                  onClick={clearSelectedImage}
+                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors duration-200"
+                  title="Remove selected image"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
               <label
                 htmlFor="avatar-upload"
                 className={`
@@ -54,15 +166,33 @@ const ProfilePage = () => {
                   type="file"
                   id="avatar-upload"
                   className="hidden"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png"
                   onChange={handleImageUpload}
                   disabled={isUpdatingProfile}
+                  onClick={(e) => {
+                    if (isUpdatingProfile) {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </label>
             </div>
-            <p className="text-sm text-zinc-400">
-              {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
-            </p>
+            
+            {uploadError && (
+              <div className="flex items-center gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded-lg px-3 py-2 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+            
+            <div className="text-center space-y-1">
+              <p className="text-sm text-zinc-400">
+                {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
+              </p>
+              <p className="text-xs text-zinc-500">
+                Allowed formats: JPG, JPEG, PNG (Max 2MB, will be compressed)
+              </p>
+            </div>
           </div>
 
           <div className="space-y-6">
