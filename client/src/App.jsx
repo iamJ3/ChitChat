@@ -10,8 +10,12 @@ const App = () => {
   const { authUser, isCheckingAuth, checkAuth } = useAuthStore();
   const { theme } = useThemeStore();
   useEffect(() => {
-
+    // ensure auth checked
     checkAuth();
+    // keep root <html> data-theme in sync so portals and global elements update
+    if (typeof document !== "undefined" && document.documentElement) {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
   }, [checkAuth]);
 
   console.log({ authUser });
@@ -22,6 +26,12 @@ const App = () => {
 
     </div>;
   }
+
+  useEffect(() => {
+    if (typeof document !== "undefined" && document.documentElement) {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+  }, [theme]);
 
   return (
     <div data-theme={theme}>

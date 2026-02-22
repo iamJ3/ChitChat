@@ -143,9 +143,9 @@ const ProfilePage = () => {
                 className="size-32 rounded-full object-cover border-4 "
               />
               {selectedImg && (
-                <button
+              <button
                   onClick={clearSelectedImage}
-                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors duration-200"
+                  className="absolute top-0 right-0 bg-error hover:bg-error/90 text-error-content p-1 rounded-full transition-colors duration-200"
                   title="Remove selected image"
                 >
                   <X className="w-4 h-4" />
@@ -179,17 +179,17 @@ const ProfilePage = () => {
             </div>
             
             {uploadError && (
-              <div className="flex items-center gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded-lg px-3 py-2 text-sm">
+              <div className="flex items-center gap-2 text-error-content bg-error/10 border border-error/30 rounded-lg px-3 py-2 text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{uploadError}</span>
               </div>
             )}
             
             <div className="text-center space-y-1">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-base-content/70">
                 {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
               </p>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-base-content/60">
                 Allowed formats: JPG, JPEG, PNG (Max 2MB, will be compressed)
               </p>
             </div>
@@ -197,7 +197,7 @@ const ProfilePage = () => {
 
           <div className="space-y-6">
             <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <div className="text-sm text-base-content/70 flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Full Name
               </div>
@@ -205,7 +205,7 @@ const ProfilePage = () => {
             </div>
 
             <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <div className="text-sm text-base-content/70 flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 Email Address
               </div>
