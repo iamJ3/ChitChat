@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import Message from "../models/messages.model.js";
-import cloudinary from "../lib/cloudinary.js";
+import cloudinary from "../lib/cloudinaryConfig.js";
 import { emitToUser } from "../lib/socket.js";
 
 const SOCKET_EVENTS = {
