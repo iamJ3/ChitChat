@@ -9,14 +9,19 @@ import { io, server,app } from "./lib/socket.js";
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://chit-chat-space.vercel.app"
+ process.env.CLIENT_URL,
 ];
 dotenv.config()
 
-
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // allow Postman, mobile apps, server-to-server (no origin)
+    if (!origin) return callback(null, true);
+
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app")   // allow preview deployments
+    ) {
       callback(null, true);
     } else {
       callback(new Error("CORS not allowed"));
