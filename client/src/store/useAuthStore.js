@@ -104,6 +104,7 @@ export const useAuthStore = create((set, get) => ({
 
       const sock = io(BASE_URL, {
         query: { userId: authUser._id },
+        withCredentials: true, // include cookie for socket handshake
       });
 
       sock.on("connect", () => {

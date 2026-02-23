@@ -5,9 +5,21 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
+const normalize = (u) => (typeof u === "string" ? u.replace(/\/$/, "") : u);
+const CLIENT = normalize(process.env.CLIENT_URL) || "http://localhost:5173";
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://chit-chat-space.vercel.app"],
+    origin: (origin, callback) => {
+      // allow server-to-server or tools (no origin)
+      if (!origin) return callback(null, true);
+      const incoming = normalize(origin);
+      if (incoming === CLIENT || incoming.endsWith(".vercel.app") || incoming === "http://localhost:5173") {
+        return callback(null, true);
+      }
+      return callback(new Error("Socket CORS not allowed"));
+    },
+    credentials: true,
   },
 });
 

@@ -7,10 +7,12 @@ import cors from "cors";
 import messageRoutes from "./routes/messages.route.js";
 import { io, server,app } from "./lib/socket.js";
 
+// Normalize allowed origins and read from env. Ensure no trailing slashes.
+const normalize = (u) => (typeof u === "string" ? u.replace(/\/$/, "") : u);
 const allowedOrigins = [
-  "http://localhost:5173",
- process.env.CLIENT_URL,
-];
+  normalize("http://localhost:5173"),
+  normalize(process.env.CLIENT_URL),
+].filter(Boolean);
 dotenv.config()
 
 app.use(cors({
@@ -18,16 +20,15 @@ app.use(cors({
     // allow Postman, mobile apps, server-to-server (no origin)
     if (!origin) return callback(null, true);
 
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.endsWith(".vercel.app")   // allow preview deployments
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed"));
+    const incoming = normalize(origin);
+    // allow configured allowedOrigins or preview vercel deployments
+    if (allowedOrigins.includes(incoming) || incoming.endsWith(".vercel.app")) {
+      return callback(null, true);
     }
+    return callback(new Error("CORS not allowed"));
   },
-  credentials: true
+  credentials: true,
+  // expose headers as needed
 }));
 
 app.use(cookieParser());

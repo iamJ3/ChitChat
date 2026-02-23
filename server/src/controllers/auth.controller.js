@@ -26,20 +26,23 @@ const signup = async (req, res) => {
             email,
             fullName,
             password: hashedPassword
-
         });
 
-        if (newUser) {
-            generateToken(newUser._id, res)
-            await newUser.save();
+        // Save first, then set the cookie token. This avoids setting a token
+        // when the DB save fails and keeps the flows consistent.
+        const saved = await newUser.save();
+        if (saved) {
+            generateToken(saved._id, res);
             return res.status(201).json({
-                _id: newUser._id,
-                fullName: newUser.fullName,
-                email: newUser.email,
-                profilePic: newUser.profilePic,
-                createdAt: newUser.createdAt,
+                _id: saved._id,
+                fullName: saved.fullName,
+                email: saved.email,
+                profilePic: saved.profilePic,
+                createdAt: saved.createdAt,
             });
-        } else res.status(400).json({ message: "Invalid user data" });
+        } else {
+            return res.status(400).json({ message: "Invalid user data" });
+        }
 
     } catch (error) {
         console.log(`encountered error : ${error}`);
@@ -74,7 +77,14 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
     try {
-        res.cookie("jwt", "", { maxAge: 0 });
+        const isProd = process.env.NODE_ENV === "production";
+        // Clear cookie using same attributes as it was set with so browser removes it
+        res.clearCookie("jwt", {
+            httpOnly: true,
+            sameSite: isProd ? "none" : "lax",
+            secure: isProd,
+            path: "/",
+        });
         res.status(200).json({ message: "Logged out successfully" });
 
     } catch (error) {
