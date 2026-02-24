@@ -1,3 +1,5 @@
+
+https://github.com/user-attachments/assets/6f8366c5-1f3f-4ec9-9f01-2c78b485c9e2
 <!--- ChitChat README -->
 
 # ChitChat 🚀
@@ -14,7 +16,7 @@ ChitChat is a production-ready, full-stack real-time chat application built with
 
 ## Live Demo
 
-[Live demo placeholder](https://example.com) (coming soon)
+[Live demo placeholder](Uploading chitchat2.mp4…) 
 
 ## Features
 
